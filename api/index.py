@@ -59,7 +59,7 @@ class handler(BaseHTTPRequestHandler):
                     <textarea id="bulkInput" rows="10" style="width: 100%; padding: 10px; margin-bottom: 10px;" placeholder="03730043&#10;04199019"></textarea>
                     <button onclick="doBulkQuery()" style="background: #0070f3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">查詢</button>
                     <div id="loading" style="display:none; margin-top: 10px; color: #666;">查詢中...</div>
-                    <pre id="resultArea" style="background: #fafafa; padding: 15px; border: 1px solid #eaeaea; margin-top: 10px; overflow-x: auto; white-space: pre-wrap; display:none;"></pre>
+                    <textarea id="resultArea" rows="10" style="width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #eaeaea; display:none;" readonly></textarea>
                 </div>
 
                 <h3>範例連結</h3>
@@ -80,7 +80,7 @@ class handler(BaseHTTPRequestHandler):
 
                         document.getElementById('loading').style.display = 'block';
                         document.getElementById('resultArea').style.display = 'none';
-                        document.getElementById('resultArea').textContent = '';
+                        document.getElementById('resultArea').value = '';
 
                         try {
                             const res = await fetch('/api', {
@@ -96,7 +96,7 @@ class handler(BaseHTTPRequestHandler):
                             ).join("\\n");
                             
                             document.getElementById('resultArea').style.display = 'block';
-                            document.getElementById('resultArea').textContent = text;
+                            document.getElementById('resultArea').value = text;
                         } catch (e) {
                             alert("查詢發生錯誤: " + e);
                         } finally {
