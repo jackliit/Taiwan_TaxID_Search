@@ -88,9 +88,15 @@ class handler(BaseHTTPRequestHandler):
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ ids: ids })
                             });
-                            const data = await res.json();
+                            const result = await res.json();
+                            const list = result.data || [];
+                            // Format: 統一編號 [TAB] 單位名稱 [TAB] 資料來源
+                            const text = list.map(item => 
+                                (item["統一編號"]||"") + "\t" + (item["單位名稱"]||"") + "\t" + (item["資料來源"]||"")
+                            ).join("\n");
+                            
                             document.getElementById('resultArea').style.display = 'block';
-                            document.getElementById('resultArea').textContent = JSON.stringify(data, null, 2);
+                            document.getElementById('resultArea').textContent = text;
                         } catch (e) {
                             alert("查詢發生錯誤: " + e);
                         } finally {
