@@ -92,8 +92,8 @@ class handler(BaseHTTPRequestHandler):
                             const list = result.data || [];
                             // Format: 統一編號 [TAB] 單位名稱 [TAB] 資料來源
                             const text = list.map(item => 
-                                (item["統一編號"]||"") + "\t" + (item["單位名稱"]||"") + "\t" + (item["資料來源"]||"")
-                            ).join("\n");
+                                (item["統一編號"]||"") + "\\t" + (item["單位名稱"]||"") + "\\t" + (item["資料來源"]||"")
+                            ).join("\\n");
                             
                             document.getElementById('resultArea').style.display = 'block';
                             document.getElementById('resultArea').textContent = text;
