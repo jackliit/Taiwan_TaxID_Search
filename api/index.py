@@ -227,38 +227,35 @@ class handler(BaseHTTPRequestHandler):
             
             final_results = {}
             
-            # --- 步驟 1: 查詢政府 API (批次/平行優化) ---
-            # 客戶要求 100 筆為一批
-            chunk_size = 100
-            for i in range(0, len(ids), chunk_size):
-                chunk = ids[i:i+chunk_size]
-                
-                filters = [f"Business_Accounting_NO eq {x}" for x in chunk]
-                filter_str = " or ".join(filters)
-                
+            # --- 步驟 1: 查詢政府 API (逐筆查詢) ---
+            # 由於此 API 不支援 Business_Accounting_NO 的 OR 查詢，必須逐筆請求
+            for tax_id in ids:
                 try:
                     govt_url = 'https://data.gcis.nat.gov.tw/od/data/api/9D17AE0D-09B5-4732-A8F4-81ADED04B679'
                     params = {
                         '$format': 'json',
-                        '$filter': filter_str,
+                        '$filter': f"Business_Accounting_NO eq {tax_id}",
                         '$skip': 0,
-                        '$top': 200 # 配合 chunk_size 放大一些
+                        '$top': 1
                     }
-                    resp = requests.get(govt_url, params=params, timeout=10)
+                    # 逐筆查詢，timeout 不宜過長
+                    resp = requests.get(govt_url, params=params, timeout=4)
+                    
                     if resp.status_code == 200:
                         j_data = resp.json()
-                        if isinstance(j_data, list):
-                            for item in j_data:
-                                tax_id = item.get('Business_Accounting_NO')
-                                comp_name = item.get('Company_Name') or item.get('Business_Name')
-                                if tax_id and comp_name:
-                                    final_results[tax_id] = {
-                                        "統一編號": tax_id,
-                                        "單位名稱": comp_name,
-                                        "資料來源": "經濟部商業司"
-                                    }
+                        if isinstance(j_data, list) and len(j_data) > 0:
+                            item = j_data[0]
+                            comp_name = item.get('Company_Name') or item.get('Business_Name')
+                            
+                            # 確保有拿到名稱
+                            if comp_name:
+                                final_results[tax_id] = {
+                                    "統一編號": tax_id,
+                                    "單位名稱": comp_name,
+                                    "資料來源": "經濟部商業司"
+                                }
                 except Exception as e:
-                    print(f"Govt API Batch Error: {e}")
+                    print(f"Govt API Error ({tax_id}): {e}")
                     pass
             
             # --- 步驟 2: 查詢 Supabase (一次性優化) ---
