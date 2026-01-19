@@ -55,6 +55,15 @@ class handler(BaseHTTPRequestHandler):
                 </div>
 
                 <div class="endpoint">
+                    <h3>單位名稱反查 (Name Lookup)</h3>
+                    <p>輸入單位名稱關鍵字 (部分吻合)：</p>
+                    <input type="text" id="nameInput" placeholder="例如: 台積電" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                    <button onclick="doNameSearch()" style="background: #0070f3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">查詢名稱</button>
+                    <div id="nameLoading" style="display:none; margin-top: 10px; color: #666;">查詢中...</div>
+                    <div id="nameResultArea" style="margin-top: 10px; display:none;"></div>
+                </div>
+
+                <div class="endpoint">
                     <h3>多筆查詢 (GUI)</h3>
                     <p>輸入多個統一編號 (每行一個)，一次查詢：</p>
                     <textarea id="bulkInput" rows="10" style="width: 100%; padding: 10px; margin-bottom: 10px;" placeholder="03730043&#10;04199019"></textarea>
@@ -71,6 +80,46 @@ class handler(BaseHTTPRequestHandler):
                 </div>
 
                 <script>
+                    async function doNameSearch() {
+                        const name = document.getElementById('nameInput').value.trim();
+                        if (!name) {
+                            alert("請輸入單位名稱關鍵字");
+                            return;
+                        }
+
+                        document.getElementById('nameLoading').style.display = 'block';
+                        document.getElementById('nameResultArea').style.display = 'none';
+                        document.getElementById('nameResultArea').innerHTML = '';
+
+                        try {
+                            const res = await fetch('/?name=' + encodeURIComponent(name));
+                            const result = await res.json();
+                            const list = result.data || [];
+                            
+                            if (list.length === 0) {
+                                document.getElementById('nameResultArea').innerHTML = '<p>查無資料。</p>';
+                            } else {
+                                let html = '<table style="width:100%; border-collapse: collapse; margin-top: 10px;">';
+                                html += '<tr style="background:#f4f4f4; text-align:left;"><th style="padding:8px; border:1px solid #ddd;">統一編號</th><th style="padding:8px; border:1px solid #ddd;">單位名稱</th><th style="padding:8px; border:1px solid #ddd;">資料來源</th></tr>';
+                                list.forEach(item => {
+                                    html += `<tr>
+                                        <td style="padding:8px; border:1px solid #ddd;">${item['統一編號'] || ''}</td>
+                                        <td style="padding:8px; border:1px solid #ddd;">${item['單位名稱'] || ''}</td>
+                                        <td style="padding:8px; border:1px solid #ddd;">${item['資料來源'] || ''}</td>
+                                    </tr>`;
+                                });
+                                html += '</table>';
+                                document.getElementById('nameResultArea').innerHTML = html;
+                            }
+                            
+                            document.getElementById('nameResultArea').style.display = 'block';
+                        } catch (e) {
+                            alert("查詢發生錯誤: " + e);
+                        } finally {
+                            document.getElementById('nameLoading').style.display = 'none';
+                        }
+                    }
+
                     async function doBulkQuery(skipGovt) {
                         const input = document.getElementById('bulkInput').value;
                         const ids = input.replace(/[\\n\\r]+/g, ",").split(",").map(x => x.trim()).filter(x => x);
